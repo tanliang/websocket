@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>console</title>
+<link rel="stylesheet" href="js/jquery-ui.min.css">
+<script type="text/javascript" src="js/jquery.js"></script>
+<script type="text/javascript" src="js/jquery.url.js"></script>
+<script type="text/javascript" src="js/jquery.WebSocket.min.js"></script>
+<script type="text/javascript" src="js/jquery-ui.min.js"></script>
+<style>
+body {
+	margin: 0;
+}
+
+#dialog label, #dialog input {
+	display: block;
+}
+
+#dialog label {
+	margin-top: 0.5em;
+}
+
+#dialog input, #dialog textarea {
+	width: 95%;
+}
+
+#tabs {
+    margin-top:43px;margin-bottom:5%;
+    /*min-height:300px;*/
+}
+
+#tabs li .ui-icon-close {
+	float: left;
+	margin: 0.4em 0.2em 0 0;
+	cursor: pointer;
+}
+
+#tabs p {
+    line-height:1.5em;
+    max-width:60%;
+    clear:both;
+}
+
+#tabs p label {
+    font-size:0.5em;color:#ccc;
+}
+
+.msg-send, .msg-send label {
+    float:right;
+}
+
+.ui-widget-content {
+    border:0;
+}
+
+#send {
+    position:fixed;
+    bottom:0;
+    right: 0;
+    border-top: 1px solid #ddd;
+    width:98%;
+    padding:1%;
+}
+
+#tab-header {
+    position:fixed;
+    top:0;
+    right: 0;
+    width:99%;
+}
+
+</style>
+
+</head>
+<body>
+
+	<div id="dialog" title="please input login info.">
+		<form id="login">
+			<fieldset class="ui-helper-reset">
+			    <input type="hidden" name="route" value="login">
+				<label for="username">username</label>
+				<input type="text" name="username" id="username" value="xxx"
+					class="ui-widget-content ui-corner-all"> 
+				<label for="password">password</label>
+                <input type="text" name="password" id="password" value="123456"
+                    class="ui-widget-content ui-corner-all"> 
+			</fieldset>
+		</form>
+	</div>
+
+
+<div id="main">
+	<div id="tabs">
+		<ul id="tab-header">
+		</ul>
+	</div>
+	<div id="input">
+	<input type="text" name="send" id="send" placeholder="Enter send message" value="" alt=""
+                    class="ui-widget-content ui-corner-all"> 
+	</div>
+</div>
+<div id="warning" class="ui-widget" style="width:98%;margin:0 auto;display:none;">
+    <div class="ui-state-highlight ui-corner-all" style="margin-top: 20px; padding: 0 .7em;">
+        <p><span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;"></span>
+        <strong>INFO: </strong> no message now.</p>
+    </div>
+</div>
+</body>
+</html>
+
+<script type="text/javascript">
+	$.fn.serializeObject = function()
+	{
+	    var o = {};
+	    var a = this.serializeArray();
+	    $.each(a, function() {
+	        if (o[this.name] !== undefined) {
+	            if (!o[this.name].push) {
+	                o[this.name] = [o[this.name]];
+	            }
+	            o[this.name].push(this.value || '');
+	        } else {
+	            o[this.name] = this.value || '';
+	        }
+	    });
+	    return o;
+	};
+    $(function(){
+    	const WS_ID = 'WebSocketPipe';
+    	var name;
+
+        // The WebSocket-Object (with resource + fallback)
+        var ws = $.WebSocket('ws://127.0.0.1:8078');
+        // WebSocket onerror event triggered also in fallback
+        ws.onerror = function(e) {
+            console.log('Error with WebSocket uid: ' + e.target.uid);
+        };
+        /**
+         * demonstrate multiplexing
+         */
+        var pipe1;
+        // if connection is opened => start opening a pipe (multiplexing)
+        ws.onopen = function() {
+            //
+            pipe1 = ws.registerPipe(null, null, {
+                onopen: function() {
+                    console.log('pipe1 (' + this.uid + ') connected!');
+                },
+                onmessage: function(e) {
+                    console.log('< pipe1 : ' + e.data);
+                    packet = JSON.parse(e.data);
+                    if (packet.type == WS_ID) {
+                        switch (packet.action) {
+                        case 'ping':
+                            break;
+                        case 'message':
+                        default:
+	                    	var data = packet.data;
+	                        switch (data.route) {
+	                        case 'login':
+	                        	if (data.res) {
+	                        		name = data.res.name
+	                        		pipe1.send({route: "ping"});
+	                                $( "#dialog" ).dialog("close");
+	                        	} else {
+	                                alert("please check you login info");
+	                            }
+	                        	break;
+	                        default:
+	                        	if ($("#warnging")) {
+	                                $("#warning").remove();
+	                        		$("#main").css("display", "block");
+	                        	}
+	                            if ($("#tabs-"+data.from).length == 0) {
+	                            	addTab(data.from, data.name, data.to);
+	                            }
+	                            _recv(data.from, data.name, data.msg);
+	                            if (tabs.tabs( "option", "active") == false) {
+	                            	tabs.tabs({active:0});
+	                            }
+	                            break;
+	                        }
+                        }
+                    }
+                },
+                onerror: function(e) {
+                    console.log('< pipe1 error : ' + e.data);
+                },
+                onclose: function() {
+                    console.log('pipe1 (' + pipe.uid + ') connection closed!');
+                }
+            });
+            var _recv = function(from, name, msg) {
+                var d = new Date();
+                $("#tabs-"+from).append('<p><label>recv at '+d.toLocaleString()+' by '+ name +'</label><br>'+msg+'</p>');
+                $("body").scrollTop($("body").height());
+            };
+        };
+
+    $("#send").keyup(function(e){
+    	if (e.keyCode == 13) {
+    		
+    		var idx = tabs.tabs('option', 'active');
+    		var tab = $($("div[id^=tabs-]")[idx]);
+            var from = tab.attr("from");
+            var to = tab.attr("to");
+            var msg = $("#send").val();
+
+    	    var packet = {
+    	    	route: "message",
+    	    	from: to,
+    	    	name: name,
+    	    	to: from,
+    	    	msg: msg
+    	    };
+    	    pipe1.send(packet);
+    	    $("#send").val("");
+            var d = new Date();
+            $("#tabs-"+from).append('<p class="msg-send"><label>send at '+d.toLocaleString()+' by '+ name +'</label><br>'+msg+'</p>');
+            $("body").scrollTop($("body").height());
+    	}
+    });
+ 
+    // modal dialog init: custom buttons and a "close" callback resetting the form inside
+    var dialog = $( "#dialog" ).dialog({
+      closeOnEscape: false,
+      open: function(event, ui) { $(".ui-dialog-titlebar-close", ui.dialog | ui).hide(); },
+      autoOpen: false,
+      modal: true,
+      buttons: [{
+    	text: "登录",
+        click: function() {
+        	if (pipe1 != undefined) {
+                pipe1.send($("#login").serializeObject());
+        	}
+          //$( this ).dialog( "close" );
+        }
+      }],
+      close: function(event, ui) {
+    	  //form[ 0 ].reset();
+      }
+    }).dialog( "open" );
+ 
+    
+    var tabTemplate = "<li><a href='#{href}'>#{label}</a> <span class='ui-icon ui-icon-close' role='presentation'>Remove Tab</span></li>";
+    var tabs = $( "#tabs" ).tabs();
+    
+    // actual addTab function: adds new tab using the input from the form above
+    function addTab(from, name, to) {
+      var id = "tabs-" + from,
+        li = $( tabTemplate.replace( /#\{href\}/g, "#" + id ).replace( /#\{label\}/g, name ) );
+ 
+      tabs.find( ".ui-tabs-nav" ).append( li );
+      var div = "<div id='" + id + "' from='#{from}' to='#{to}'></div>";
+      tabs.append( div.replace( /#\{from\}/g, from ).replace( /#\{to\}/g, to ) );
+      tabs.tabs( "refresh" );
+    }
+ 
+    // close icon: removing the tab on click
+    tabs.delegate( "span.ui-icon-close", "click", function() {
+      var panelId = $( this ).closest( "li" ).remove().attr( "aria-controls" );
+      $( "#" + panelId ).remove();
+      tabs.tabs( "refresh" );
+    });
+    
+    tabs.bind( "keyup", function( event ) {
+      if ( event.altKey && event.keyCode === $.ui.keyCode.BACKSPACE ) {
+        var panelId = tabs.find( ".ui-tabs-active" ).remove().attr( "aria-controls" );
+        $( "#" + panelId ).remove();
+        tabs.tabs( "refresh" );
+      }
+    });
+    
+    tabs.bind( "tabsactivate", function( event, ui ) {
+        // TODO: current from to
+        //alert(ui.newTab.attr("id"));
+    });
+  });
+  </script>
+
+<script>
+  $(function() {
+    $( "#tabs" ).tabs().addClass( "ui-tabs-vertical ui-helper-clearfix" );
+    $( "#tabs li" ).removeClass( "ui-corner-top" ).addClass( "ui-corner-left" );
+  });
+  </script>
+<script>
+// Create an empty context menu
+var menu = new nw.Menu();
+
+// Add some items with label
+menu.append(new nw.MenuItem({
+  label: 'Item A',
+  click: function(){
+    alert('You have clicked at "Item A"');
+  }
+}));
+menu.append(new nw.MenuItem({ label: 'Item B' }));
+menu.append(new nw.MenuItem({ type: 'separator' }));
+menu.append(new nw.MenuItem({ label: 'Item C' }));
+
+// Hooks the "contextmenu" event
+document.body.addEventListener('contextmenu', function(ev) {
+  // Prevent showing default context menu
+  ev.preventDefault();
+  // Popup the native context menu at place you click
+  menu.popup(ev.x, ev.y);
+
+  return false;
+}, false);
+
+// Give it a menu
+var menu = new nw.Menu();
+menu.append(new nw.MenuItem({ type: 'checkbox', label: 'box1' }));
+
+class Tray {
+	constructor(param, menu) {
+		this.instance = new nw.Tray(param);
+		this.icon_bak = param.icon;
+		this.icon_toggle = param.icon_toggle;
+		if (menu) {
+			this.instance.menu = menu;
+		}
+	}
+	
+	toggleIcon() {
+		if (this.instance.icon == this.icon_bak)	{
+			this.instance.icon = this.icon_toggle;
+		} else {
+			this.instance.icon = this.icon_bak;
+		}
+	}
+	
+	restoreIcon() {
+		this.instance.icon = this.icon_bak;
+	}
+}
+
+var interval = null;
+var param = { title: 'Tray', icon: 'img/cart_ok.png', icon_toggle: 'img/cart_grey.png' }
+var tray = new Tray(param, menu);
+
+$("#start").click(function(){
+	interval = window.setInterval("tray.toggleIcon()", 600);
+});
+
+$("#stop").click(function(){
+	if (interval != null) {
+		window.clearInterval(interval);
+		tray.restoreIcon();
+		interval = null;
+	}
+});
+</script>
+

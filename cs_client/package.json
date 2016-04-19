@@ -1,0 +1,10 @@
+{
+
+	"window" : {
+		"min_width": 600,
+		"min_height": 400
+			},
+	"name": "console",
+	"main": "index.html"
+	
+}

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<title>demo for H5</title>
+<script type="text/javascript" src="js/jquery.js"></script>
+<script type="text/javascript" src="js/jquery.url.js"></script>
+<script type="text/javascript" src="js/jquery.WebSocket.min.js"></script>
+<style>
+body {margin:0;}
+header, footer, main {
+    display: block;
+}
+
+header {
+    position: fixed;
+    height: 50px;
+    left: 0;
+    right: 0;
+    top: 0;
+}
+
+footer {
+    position: fixed;
+    height: 34px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+main {
+    position: absolute;
+    top: 10px;
+    bottom: 34px;
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch;
+    width:100%;
+}
+
+main .content {
+    min-height: 200px;
+    padding:1em;
+}
+
+#main p {
+    line-height:1.5em;
+    max-width:80%;
+    clear:both;
+}
+
+#main p label {
+    font-size:0.5em;color:#ccc;
+}
+
+.msg-send, .msg-send label {
+    float:right;
+}
+
+#input {
+    border-top: 1px solid #ddd;
+}
+#send {
+    border:0;
+    width:96%;
+    padding:9px;
+}
+
+</style>
+
+</head>
+<body class="layout-scroll-fixed">
+    
+    <main>
+        <div class="content" id="main">  
+        </div>
+    </main>
+    
+    <footer>
+    <div id="input" contenteditable="true">
+    <input type="text" name="send" id="send" placeholder="回车发送消息" value=""> 
+    </div>
+
+    </footer>
+</body>
+</html>
+
+<script type="text/javascript">
+
+$(function(){
+   	const WS_ID = 'WebSocketPipe';
+   	var param = $.url().param();
+   	var from = null;
+   	var name = null;
+
+    // The WebSocket-Object (with resource + fallback)
+    var ws = $.WebSocket('ws://127.0.0.1:8078');
+    // WebSocket onerror event triggered also in fallback
+    ws.onerror = function(e) {
+        console.log('Error with WebSocket uid: ' + e.target.uid);
+    };
+    /**
+     * demonstrate multiplexing
+     */
+    var pipe1;
+    // if connection is opened => start opening a pipe (multiplexing)
+    ws.onopen = function() {
+        //
+        pipe1 = ws.registerPipe(param.token, null, {
+            onopen: function() {
+                console.log('pipe1 (' + this.uid + ') connected!');
+            },
+            onmessage: function(e) {
+                console.log('< pipe1 : ' + e.data);
+                var packet = JSON.parse(e.data);
+                if (packet.type == WS_ID) {
+                    switch (packet.action) {
+                    case 'ping':
+                    	break;
+                    case 'message':
+                    default:
+                    	switch (packet.data.route) {
+                    	case 'login':
+                    		var res = packet.data.res;
+                    		if (res) {
+                    			pipe1.send({route: "ping"});
+                    			_recv("Welcome.");
+                    			from = res.from;
+                    			name = res.name;
+                    			// send param.msg
+                    			var data = {
+                    				route: "message",
+                    				from: from,
+                    				name: name,
+                    				to: param.to,
+                    				msg: param.msg
+                    			};
+                    			pipe1.send(data);
+                    		} else {
+                    			_recv("login fail.");
+                    		}
+                    		break;
+                    	default:
+                    		var msg = "system is busy, try again later.";
+                    		if (packet.data && packet.data.msg) {
+                    			msg = packet.data.msg;
+                    		}
+                    		_recv(msg);
+                    		break;
+                    	}
+                    	break;
+                    }
+                }
+            },
+            onerror: function(e) {
+                console.log('< pipe1 error : ' + e.data);
+            },
+            onclose: function() {
+                console.log('pipe1 (' + this.uid + ') connection closed!');
+            }
+        });
+        
+        var _recv = function(msg) {
+            var d = new Date();
+            $("#main").append('<p><label>recv at '+d.toLocaleString()+'</label><br>'+msg+'</p>');
+            $("main").scrollTop($("main").height());
+        };
+    };
+
+    $("#send").keyup(function(e){
+    	if (e.keyCode == 13) {
+    		var d = new Date();
+    		$("#main").append('<p class="msg-send"><label>send at '+d.toLocaleString()+'</label><br>'+$("#send").val()+'</p>');
+            var data = {
+                route: "message",
+                from: from,
+                name: name,
+                to: param.to,
+                msg: $("#send").val()
+            };
+            pipe1.send(data);
+            $("#send").val("");
+            $("main").scrollTop($("main").height());
+    	}
+    });
+});
+</script>
+
