@@ -10,19 +10,19 @@
 <script type="text/javascript" src="js/jquery-ui.min.js"></script>
 <style>
 body {
-	margin: 0;
+    margin: 0;
 }
 
 #dialog label, #dialog input {
-	display: block;
+    display: block;
 }
 
 #dialog label {
-	margin-top: 0.5em;
+    margin-top: 0.5em;
 }
 
 #dialog input, #dialog textarea {
-	width: 95%;
+    width: 95%;
 }
 
 #tabs {
@@ -31,9 +31,9 @@ body {
 }
 
 #tabs li .ui-icon-close {
-	float: left;
-	margin: 0.4em 0.2em 0 0;
-	cursor: pointer;
+    float: left;
+    margin: 0.4em 0.2em 0 0;
+    cursor: pointer;
 }
 
 #tabs p {
@@ -52,6 +52,25 @@ body {
 
 .ui-widget-content {
     border:0;
+}
+
+.ui-state-new a, .ui-state-new a:link, .ui-state-new a:visited
+{
+    color: red;
+    text-decoration: none;
+}
+
+#warning {
+    width:98%;
+    margin:0 auto;
+}
+
+.show {
+    display:block;
+}
+
+.hide {
+    display:none;
 }
 
 #send {
@@ -75,32 +94,32 @@ body {
 </head>
 <body>
 
-	<div id="dialog" title="please input login info.">
-		<form id="login">
-			<fieldset class="ui-helper-reset">
-			    <input type="hidden" name="route" value="login">
-				<label for="username">username</label>
-				<input type="text" name="username" id="username" value="xxx"
-					class="ui-widget-content ui-corner-all"> 
-				<label for="password">password</label>
+    <div id="dialog" title="please input login info.">
+        <form id="login">
+            <fieldset class="ui-helper-reset">
+                <input type="hidden" name="route" value="login">
+                <label for="username">username</label>
+                <input type="text" name="username" id="username" value="xxx"
+                    class="ui-widget-content ui-corner-all"> 
+                <label for="password">password</label>
                 <input type="text" name="password" id="password" value="123456"
                     class="ui-widget-content ui-corner-all"> 
-			</fieldset>
-		</form>
-	</div>
+            </fieldset>
+        </form>
+    </div>
 
 
-<div id="main">
-	<div id="tabs">
-		<ul id="tab-header">
-		</ul>
-	</div>
-	<div id="input">
-	<input type="text" name="send" id="send" placeholder="Enter send message" value="" alt=""
+<div id="main" class="hide">
+    <div id="tabs">
+        <ul id="tab-header">
+        </ul>
+    </div>
+    <div id="input">
+    <input type="text" name="send" id="send" placeholder="Enter send message" value="" alt=""
                     class="ui-widget-content ui-corner-all"> 
-	</div>
+    </div>
 </div>
-<div id="warning" class="ui-widget" style="width:98%;margin:0 auto;display:none;">
+<div id="warning" class="ui-widget show">
     <div class="ui-state-highlight ui-corner-all" style="margin-top: 20px; padding: 0 .7em;">
         <p><span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;"></span>
         <strong>INFO: </strong> no message now.</p>
@@ -109,26 +128,67 @@ body {
 </body>
 </html>
 
+<script>
+
+
+class Tray {
+    constructor(param) {
+        this.instance = new nw.Tray(param);
+        this.icon_bak = param.icon;
+        this.icon_toggle = param.icon_toggle;
+    }
+    
+    toggleIcon() {
+        if (this.instance.icon == this.icon_bak)    {
+            this.instance.icon = this.icon_toggle;
+        } else {
+            this.instance.icon = this.icon_bak;
+        }
+    }
+    
+    restoreIcon() {
+        this.instance.icon = this.icon_bak;
+    }
+}
+
+var interval = null;
+var param = { title: 'Tray', icon: 'img/cart_ok.png', icon_toggle: 'img/cart_grey.png' }
+var tray = new Tray(param);
+
+var alert_flag = false;
+nw.Window.get().on('blur', function(){
+    alert_flag = true;
+});
+nw.Window.get().on('focus', function(){
+    alert_flag = false;
+    if (interval != null) {
+        window.clearInterval(interval);
+        tray.restoreIcon();
+        interval = null;
+    }
+});
+</script>
+
 <script type="text/javascript">
-	$.fn.serializeObject = function()
-	{
-	    var o = {};
-	    var a = this.serializeArray();
-	    $.each(a, function() {
-	        if (o[this.name] !== undefined) {
-	            if (!o[this.name].push) {
-	                o[this.name] = [o[this.name]];
-	            }
-	            o[this.name].push(this.value || '');
-	        } else {
-	            o[this.name] = this.value || '';
-	        }
-	    });
-	    return o;
-	};
+    $.fn.serializeObject = function()
+    {
+        var o = {};
+        var a = this.serializeArray();
+        $.each(a, function() {
+            if (o[this.name] !== undefined) {
+                if (!o[this.name].push) {
+                    o[this.name] = [o[this.name]];
+                }
+                o[this.name].push(this.value || '');
+            } else {
+                o[this.name] = this.value || '';
+            }
+        });
+        return o;
+    };
     $(function(){
-    	const WS_ID = 'WebSocketPipe';
-    	var name;
+        const WS_ID = 'WebSocketPipe';
+        var name;
 
         // The WebSocket-Object (with resource + fallback)
         var ws = $.WebSocket('ws://127.0.0.1:8078');
@@ -156,31 +216,33 @@ body {
                             break;
                         case 'message':
                         default:
-	                    	var data = packet.data;
-	                        switch (data.route) {
-	                        case 'login':
-	                        	if (data.res) {
-	                        		name = data.res.name
-	                        		pipe1.send({route: "ping"});
-	                                $( "#dialog" ).dialog("close");
-	                        	} else {
-	                                alert("please check you login info");
-	                            }
-	                        	break;
-	                        default:
-	                        	if ($("#warnging")) {
-	                                $("#warning").remove();
-	                        		$("#main").css("display", "block");
-	                        	}
-	                            if ($("#tabs-"+data.from).length == 0) {
-	                            	addTab(data.from, data.name, data.to);
-	                            }
-	                            _recv(data.from, data.name, data.msg);
-	                            if (tabs.tabs( "option", "active") == false) {
-	                            	tabs.tabs({active:0});
-	                            }
-	                            break;
-	                        }
+                            var data = packet.data;
+                            switch (data.route) {
+                            case 'login':
+                                if (data.res) {
+                                    name = data.res.name
+                                    pipe1.send({route: "ping"});
+                                    $( "#dialog" ).dialog("close");
+                                } else {
+                                    alert("please check your login info.");
+                                }
+                                break;
+                            default:
+                                if ($("#warning").hasClass("show")) {
+                                    $("#warning").removeClass("show");
+                                    $("#warning").addClass("hide");
+                                    $("#main").removeClass("hide");
+                                    $("#main").addClass("show");
+                                }
+                                if ($("#tabs-"+data.from).length == 0) {
+                                    addTab(data.from, data.name, data.to);
+                                }
+                                if (tabs.tabs( "option", "active") == false) {
+                                    tabs.tabs({active:0});
+                                }
+                                _recv(data.from, data.name, data.msg);
+                                break;
+                            }
                         }
                     }
                 },
@@ -195,31 +257,38 @@ body {
                 var d = new Date();
                 $("#tabs-"+from).append('<p><label>recv at '+d.toLocaleString()+' by '+ name +'</label><br>'+msg+'</p>');
                 $("body").scrollTop($("body").height());
+                if (alert_flag) {
+                    interval = window.setInterval("tray.toggleIcon()", 600);
+                }
+                var selected = $("li[aria-controls='tabs-"+from+"']").hasClass("ui-tabs-active");
+                if (!selected) {
+                    $("li[aria-controls='tabs-"+from+"']").addClass("ui-state-new");
+                }
             };
         };
 
     $("#send").keyup(function(e){
-    	if (e.keyCode == 13) {
-    		
-    		var idx = tabs.tabs('option', 'active');
-    		var tab = $($("div[id^=tabs-]")[idx]);
+        if (e.keyCode == 13) {
+            
+            var idx = tabs.tabs('option', 'active');
+            var tab = $($("div[id^=tabs-]")[idx]);
             var from = tab.attr("from");
             var to = tab.attr("to");
             var msg = $("#send").val();
 
-    	    var packet = {
-    	    	route: "message",
-    	    	from: to,
-    	    	name: name,
-    	    	to: from,
-    	    	msg: msg
-    	    };
-    	    pipe1.send(packet);
-    	    $("#send").val("");
+            var packet = {
+                route: "message",
+                from: to,
+                name: name,
+                to: from,
+                msg: msg
+            };
+            pipe1.send(packet);
+            $("#send").val("");
             var d = new Date();
             $("#tabs-"+from).append('<p class="msg-send"><label>send at '+d.toLocaleString()+' by '+ name +'</label><br>'+msg+'</p>');
             $("body").scrollTop($("body").height());
-    	}
+        }
     });
  
     // modal dialog init: custom buttons and a "close" callback resetting the form inside
@@ -229,16 +298,16 @@ body {
       autoOpen: false,
       modal: true,
       buttons: [{
-    	text: "登录",
+        text: "login",
         click: function() {
-        	if (pipe1 != undefined) {
+            if (pipe1 != undefined) {
                 pipe1.send($("#login").serializeObject());
-        	}
+            }
           //$( this ).dialog( "close" );
         }
       }],
       close: function(event, ui) {
-    	  //form[ 0 ].reset();
+          //form[ 0 ].reset();
       }
     }).dialog( "open" );
  
@@ -262,8 +331,15 @@ body {
       var panelId = $( this ).closest( "li" ).remove().attr( "aria-controls" );
       $( "#" + panelId ).remove();
       tabs.tabs( "refresh" );
+      if (tabs.has("div").html() == undefined) {
+          $("#main").removeClass("show");
+          $("#main").addClass("hide");
+          $("#warning").removeClass("hide");
+          $("#warning").addClass("show");
+      }
     });
     
+    /*
     tabs.bind( "keyup", function( event ) {
       if ( event.altKey && event.keyCode === $.ui.keyCode.BACKSPACE ) {
         var panelId = tabs.find( ".ui-tabs-active" ).remove().attr( "aria-controls" );
@@ -271,10 +347,9 @@ body {
         tabs.tabs( "refresh" );
       }
     });
-    
+    */
     tabs.bind( "tabsactivate", function( event, ui ) {
-        // TODO: current from to
-        //alert(ui.newTab.attr("id"));
+        ui.newTab.removeClass("ui-state-new");
     });
   });
   </script>
@@ -285,72 +360,3 @@ body {
     $( "#tabs li" ).removeClass( "ui-corner-top" ).addClass( "ui-corner-left" );
   });
   </script>
-<script>
-// Create an empty context menu
-var menu = new nw.Menu();
-
-// Add some items with label
-menu.append(new nw.MenuItem({
-  label: 'Item A',
-  click: function(){
-    alert('You have clicked at "Item A"');
-  }
-}));
-menu.append(new nw.MenuItem({ label: 'Item B' }));
-menu.append(new nw.MenuItem({ type: 'separator' }));
-menu.append(new nw.MenuItem({ label: 'Item C' }));
-
-// Hooks the "contextmenu" event
-document.body.addEventListener('contextmenu', function(ev) {
-  // Prevent showing default context menu
-  ev.preventDefault();
-  // Popup the native context menu at place you click
-  menu.popup(ev.x, ev.y);
-
-  return false;
-}, false);
-
-// Give it a menu
-var menu = new nw.Menu();
-menu.append(new nw.MenuItem({ type: 'checkbox', label: 'box1' }));
-
-class Tray {
-	constructor(param, menu) {
-		this.instance = new nw.Tray(param);
-		this.icon_bak = param.icon;
-		this.icon_toggle = param.icon_toggle;
-		if (menu) {
-			this.instance.menu = menu;
-		}
-	}
-	
-	toggleIcon() {
-		if (this.instance.icon == this.icon_bak)	{
-			this.instance.icon = this.icon_toggle;
-		} else {
-			this.instance.icon = this.icon_bak;
-		}
-	}
-	
-	restoreIcon() {
-		this.instance.icon = this.icon_bak;
-	}
-}
-
-var interval = null;
-var param = { title: 'Tray', icon: 'img/cart_ok.png', icon_toggle: 'img/cart_grey.png' }
-var tray = new Tray(param, menu);
-
-$("#start").click(function(){
-	interval = window.setInterval("tray.toggleIcon()", 600);
-});
-
-$("#stop").click(function(){
-	if (interval != null) {
-		window.clearInterval(interval);
-		tray.restoreIcon();
-		interval = null;
-	}
-});
-</script>
-
