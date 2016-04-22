@@ -1,6 +1,7 @@
 {
 
 	"window" : {
+		"icon": "img/cart_ok.png",
 		"min_width": 600,
 		"min_height": 400
 			},
