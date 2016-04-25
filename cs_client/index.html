@@ -323,6 +323,13 @@ nw.Window.get().on('focus', function(){
       }
     }).dialog( "open" );
  
+    $("#password").keyup(function(e){
+        if (e.keyCode == 13) {
+            if (pipe1 != undefined) {
+                pipe1.send($("#login").serializeObject());
+            }
+        }
+    });
     
     var tabTemplate = "<li><a href='#{href}'>#{label}</a> <span class='ui-icon ui-icon-close' role='presentation'>Remove Tab</span></li>";
     var tabs = $( "#tabs" ).tabs();
