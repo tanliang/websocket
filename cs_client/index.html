@@ -200,6 +200,7 @@ nw.Window.get().on('focus', function(){
     };
     $(function(){
         const WS_ID = 'WebSocketPipe';
+        var from;
         var name;
 
         // The WebSocket-Object (with resource + fallback)
@@ -232,6 +233,7 @@ nw.Window.get().on('focus', function(){
                             switch (data.route) {
                             case 'login':
                                 if (data.res) {
+                                	from = data.res.from;
                                     name = data.res.name
                                     pipe1.send({route: "ping"});
                                     $( "#dialog" ).dialog("close");
@@ -252,7 +254,12 @@ nw.Window.get().on('focus', function(){
                                 if (tabs.tabs( "option", "active") == false) {
                                     tabs.tabs({active:0});
                                 }
-                                _recv(data.from, data.name, data.msg);
+                                if (from != undefined && from == data.from) {
+                                	alert(data.msg);
+                                	nw.Window.get().close();
+                                } else {
+                                    _recv(data.from, data.name, data.msg);
+                                }
                                 break;
                             }
                         }

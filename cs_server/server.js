@@ -146,7 +146,6 @@ wsServer.on('request', function(request) {
     };
 
     var _login = function(level, md5_id, name, uid) {
-		_users[md5_id] = uid
 		_pipes[uid].md5_id = md5_id;
 		_pipes[uid].name = name;
 		_pipes[uid].level = level;
@@ -164,15 +163,17 @@ wsServer.on('request', function(request) {
 			if (_admin != null) {
 				var data = {
 						route: "message",
-						from: md5_id,
+						from: _admin,
 						name: name,
-						to: _admin,		// to self, using alert
-						msg: name+"登录，您被迫下线。"
+						to: md5_id,		// to self, using alert
+						msg: name+"login。you been kicked out."
 					};
-				_echo(_pipes[_admin].connection, data);
+				_echo(_pipes[_users[_admin]].connection, data);
 			}
 			_admin = md5_id;
 		}
+		
+		_users[md5_id] = uid
     };
 
     /**
