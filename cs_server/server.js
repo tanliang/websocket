@@ -2,9 +2,8 @@
  * get arguments
  */
 var program   = require('commander'); 
-program  
-.version('0.0.1')  
-.usage('[options] [value ...]')  
+
+program.version('0.0.1').usage('[options] [value ...]')  
 .option('-h, --host <string>', 'bind with a address.')  
 .option('-p, --port <string>', 'listen to a port.')  
 .option('-d, --debug <n>', 'output log. 0=no, 1=yes(default)', parseInt, 1)  
