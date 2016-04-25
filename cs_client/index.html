@@ -99,10 +99,10 @@ body {
             <fieldset class="ui-helper-reset">
                 <input type="hidden" name="route" value="login">
                 <label for="username">username</label>
-                <input type="text" name="username" id="username" value="xxx"
+                <input type="text" name="username" id="username" value="xxx" style="border:1px solid #c5c5c5;"
                     class="ui-widget-content ui-corner-all"> 
                 <label for="password">password</label>
-                <input type="text" name="password" id="password" value="123456"
+                <input type="password" name="password" id="password" value="123456" style="border:1px solid #c5c5c5;"
                     class="ui-widget-content ui-corner-all"> 
             </fieldset>
         </form>
@@ -133,9 +133,21 @@ body {
 
 class Tray {
     constructor(param) {
-        this.instance = new nw.Tray(param);
-        this.icon_bak = param.icon;
-        this.icon_toggle = param.icon_toggle;
+        var tray = new nw.Tray(param);
+
+        // Give it a menu
+        var menu = new nw.Menu();
+        menu.append(new nw.MenuItem({ label: 'quit', click: function(){
+            nw.Window.get().close();
+        } }));
+        tray.menu = menu;
+    
+       tray.on('click', function(){
+           nw.Window.get().show();
+       });
+       this.icon_bak = param.icon;
+       this.icon_toggle = param.icon_toggle;
+       this.instance = tray;
     }
     
     toggleIcon() {
