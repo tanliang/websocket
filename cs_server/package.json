@@ -6,7 +6,10 @@
   "scripts": {
     "test": "echo \"Error: no test specified! Configure in package.json\" && exit 1"
   },
-  "repository": "",
+  "repository": {
+	  "type": "git",
+	  "url": "https://github.com/tanliang/websocket.git"
+  },
   "keywords": [
     "node.js",
     "eclipse",
