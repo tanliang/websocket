@@ -1,4 +1,17 @@
 /**
+ * get arguments
+ */
+var program   = require('commander'); 
+program  
+.version('0.0.1')  
+.usage('[options] [value ...]')  
+.option('-h, --host <string>', 'bind with a address.')  
+.option('-p, --port <string>', 'listen to a port.')  
+.option('-d, --debug <n>', 'output log. 0=no, 1=yes(default)', parseInt, 1)  
+
+program.parse(process.argv)
+
+/**
  * load modules
  */
 var websocket = require('websocket').server;
@@ -10,7 +23,7 @@ var auth      = require('./auth');
  * setup
  */
 const WS_ID = 'WebSocketPipe';
-var debug = true;
+var debug = program.debug;
 
 /**
  * Create server with http module and weiterreiche the
@@ -20,7 +33,10 @@ var httpd = http.createServer(function(request, response) {
     // process HTTP request. Since we're writing just WebSockets server
     // we don't have to implement anything.
 });
-httpd.listen('8078', '127.0.0.1', function(){});
+
+var host = program.host || '127.0.0.1';
+var port = program.port || '8078';
+httpd.listen(port, host, function(){});
 
 // Create the WebSocket-Server
 wsServer = new websocket({
@@ -58,7 +74,9 @@ wsServer.on('request', function(request) {
                 switch (packet.action) {
                 case "startup":
                 	uid = packet.uid
-                    console.log('new client: ' + uid);
+                	if (debug) {
+                        console.log('new client: ' + uid);
+                	}
                     // store information about pipe!
                     _pipes[packet.uid] = {
                         connection: connection,
@@ -68,7 +86,7 @@ wsServer.on('request', function(request) {
                     	level: null
                     };
                     var login = new auth(packet);
-                	login.buyer(_login);
+                	login.ssapi(_login);
                 	break;
                 case 'shutdown':
                 	delete _users[_pipes[packet.uid].md5_id];
@@ -91,7 +109,7 @@ wsServer.on('request', function(request) {
     		 break;
     	case 'login':
         	var login = new auth(packet);
-        	login.admin(_login);
+        	login.ssbuy(_login);
         	break;
         default:
         	if (_users[packet.data.to] == undefined && _admin == null) {
@@ -150,7 +168,7 @@ wsServer.on('request', function(request) {
 						from: md5_id,
 						name: name,
 						to: _admin,		// to self, using alert
-						msg: name+"login, you been kicked off."
+						msg: name+"登录，您被迫下线。"
 					};
 				_echo(_pipes[_admin].connection, data);
 			}
@@ -184,7 +202,9 @@ wsServer.on('request', function(request) {
      */
     connection.on('close', function(connection) {
         //
-        console.log('connection closed by client with uid = ' + uid);
+    	if (debug) {
+            console.log('connection closed by client with uid = ' + uid);
+    	}
 
         for (pipe in _pipes) {
             if (pipe == uid) {
