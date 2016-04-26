@@ -12,4 +12,16 @@ index.html need [nw.js](https://github.com/nwjs/nw.js). get sdk download, as say
 
 # cs_server
 
-test on windows7 64bit
+developed on windows7 64bit, deployed on centos6.4
+
+nohup node server.js -d 0 &
+
+cat /var/cron/log_monitor.sh nohup.out
+```bash
+#!/bin/bash
+err=`cat $1 |grep -C5 error`
+if [ "$err" != "" ]; then
+  echo "$err"|mail -s "`curl ifconfig.me` $1" tanliang@xxx.com
+  cat /dev/null > $1
+fi
+```
