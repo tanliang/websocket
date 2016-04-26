@@ -6,8 +6,8 @@ function Auth(packet){
 }
 
 Auth.prototype.admin = function(callback) {
-	var api_user = "LUsgVrFhe0QNH2bYKYWYHdOE7svvINMVmiOH20F63pfKHIpnhyTqlypJStbYEn1Q";
-	var api_pass = "5KmFSX8sK2ldAuvPwlJU7g9lfG9Z3cXiGI3akRs0TbkKvutO3v0XLmKbk2ZwknxOJeBJuiVXUYbOYHjk2TawREOohArhJLERFOCPwM0QOsLp31RUuO2jP4KOXg2plHOs2U5srONhAZxeR82begMsGI8LFZ5K5aPfiyrjdncLoeRqhdV5GLZQzspfqp0CHHKqHpUxJZkMK6nPpVqxlOeKaqONISnSLK6Oh30Yqikkjv1Lpk4B7obb4BpSdTT5IllK";
+	var api_user = "xxx";
+	var api_pass = "yyy";
     var username = this.packet.data.username;
     var password = this.packet.data.password;
     var uid = this.packet.uid;

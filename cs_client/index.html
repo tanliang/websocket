@@ -130,7 +130,6 @@ body {
 
 <script>
 
-
 class Tray {
     constructor(param) {
         var tray = new nw.Tray(param);
@@ -143,6 +142,7 @@ class Tray {
         tray.menu = menu;
     
        tray.on('click', function(){
+           nw.Window.get().focus();
            nw.Window.get().show();
        });
        this.icon_bak = param.icon;
@@ -242,22 +242,22 @@ nw.Window.get().on('focus', function(){
                                 }
                                 break;
                             default:
-                                if ($("#warning").hasClass("show")) {
-                                    $("#warning").removeClass("show");
-                                    $("#warning").addClass("hide");
-                                    $("#main").removeClass("hide");
-                                    $("#main").addClass("show");
-                                }
-                                if ($("#tabs-"+data.from).length == 0) {
-                                    addTab(data.from, data.name, data.to);
-                                }
-                                if (tabs.tabs( "option", "active") == false) {
-                                    tabs.tabs({active:0});
-                                }
                                 if (from != undefined && from == data.from) {
                                 	alert(data.msg);
                                 	nw.Window.get().close();
                                 } else {
+                                    if ($("#warning").hasClass("show")) {
+                                        $("#warning").removeClass("show");
+                                        $("#warning").addClass("hide");
+                                        $("#main").removeClass("hide");
+                                        $("#main").addClass("show");
+                                    }
+                                    if ($("#tabs-"+data.from).length == 0) {
+                                        addTab(data.from, data.tab, data.to);
+                                    }
+                                    if (tabs.tabs( "option", "active") == false) {
+                                        tabs.tabs({active:0});
+                                    }
                                     _recv(data.from, data.name, data.msg);
                                 }
                                 break;
@@ -276,7 +276,7 @@ nw.Window.get().on('focus', function(){
                 var d = new Date();
                 $("#tabs-"+from).append('<p><label>recv at '+d.toLocaleString()+' by '+ name +'</label><br>'+msg+'</p>');
                 $("body").scrollTop($("body").height());
-                if (alert_flag) {
+                if (alert_flag && interval == null) {
                     interval = window.setInterval("tray.toggleIcon()", 600);
                 }
                 var selected = $("li[aria-controls='tabs-"+from+"']").hasClass("ui-tabs-active");

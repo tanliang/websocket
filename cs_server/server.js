@@ -115,22 +115,34 @@ wsServer.on('request', function(request) {
         		_echo(connection, {route: "message", res: null});
         	}
         	
+        	packet.data.tab = packet.data.name;
+        	
         	if (_admin != null) {
-            	var data = packet.data;
         		if (_users[_admin] != uid) {
+                	// seller(from) send to admin
             		var conn = _pipes[_users[_admin]].connection;
-            		if (_pipes[_users[data.from]].level != "buyer") {
-                		data.from = packet.data.to;
-                		data.to = packet.data.from;
+            		var data = packet.data;
+            		if (_pipes[_users[packet.data.from]].level != "buyer") {
+            			data = {
+            				from: packet.data.to,
+            				name: packet.data.name,
+            				tab: _pipes[_users[packet.data.to]].name,
+            				to: packet.data.from,            			
+            				msg: packet.data.msg            			
+            			}
             		}
             		_echo(conn, data);
         		} else {
-        			packet.data.name = _pipes[_users[_admin]].name;
-        			if (_users[data.from] != undefined) {
-                		var conn = _pipes[_users[data.from]].connection;
-                		data.from = packet.data.to;
-            			data.name = packet.data.name
-                		data.to = packet.data.from;
+                	// admin send to seller(from)
+        			if (_users[packet.data.from] != undefined) {
+                		var conn = _pipes[_users[packet.data.from]].connection;
+                		var data = {
+                			from: packet.data.to,
+                			name: _pipes[_users[_admin]].name,
+                			tab: packet.data.name,
+                			to: packet.data.from,            			
+            				msg: packet.data.msg  
+                		}
                 		_echo(conn, data);
         			}
         		}
@@ -159,21 +171,25 @@ wsServer.on('request', function(request) {
 		};
     	_echo(connection, res);
     	
+    	var md5_prev = md5_id;
 		if (level == "admin") {
-			if (_admin != null) {
-				var data = {
-						route: "message",
-						from: _admin,
-						name: name,
-						to: md5_id,		// to self, using alert
-						msg: name+"login。you been kicked out."
-					};
-				_echo(_pipes[_users[_admin]].connection, data);
-			}
+			md5_prev = _admin;
 			_admin = md5_id;
 		}
-		
-		_users[md5_id] = uid
+    	
+    	if (_users[md5_prev] != undefined) {
+    		var prev = _pipes[_users[md5_prev]];
+			var data = {
+					route: "message",
+					from: prev.md5_id,
+					name: name,
+					to: md5_id,		// to self, using alert
+					msg: name+"logined from "+connection.remoteAddress+"。you been kicked out."
+				};
+			_echo(prev.connection, data);
+    	}
+    	
+		_users[md5_id] = uid;
     };
 
     /**
@@ -214,7 +230,10 @@ wsServer.on('request', function(request) {
                 if (_admin == _pipes[pipe].md5_id) {
                 	_admin = null;
                 }
-                delete _users[_pipes[pipe].md5_id];
+                // in case of user login repeatly
+                if (_users[_pipes[pipe].md5_id] == uid) {
+                    delete _users[_pipes[pipe].md5_id];
+                }
                 delete _pipes[pipe];
             }
         }
