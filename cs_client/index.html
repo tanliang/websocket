@@ -208,6 +208,8 @@ nw.Window.get().on('focus', function(){
         // WebSocket onerror event triggered also in fallback
         ws.onerror = function(e) {
             console.log('Error with WebSocket uid: ' + e.target.uid);
+            alert("connecting to server failed.");
+            nw.Window.get().close();
         };
         /**
          * demonstrate multiplexing
@@ -267,6 +269,7 @@ nw.Window.get().on('focus', function(){
                 },
                 onerror: function(e) {
                     console.log('< pipe1 error : ' + e.data);
+                    alert("connecting to server failed.");
                 },
                 onclose: function() {
                     console.log('pipe1 (' + pipe.uid + ') connection closed!');
