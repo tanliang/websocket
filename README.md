@@ -16,7 +16,9 @@ developed on windows7 64bit, deployed on centos6.4
 
 nohup node server.js -d 0 &
 
-cat /var/cron/log_monitor.sh nohup.out
+crontab -e
+
+*/30 * * * * /var/cron/log_monitor.sh nohup.out
 ```bash
 #!/bin/bash
 err=`cat $1 |grep -C5 error`
