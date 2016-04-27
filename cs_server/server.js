@@ -139,7 +139,7 @@ wsServer.on('request', function(request) {
                 		var data = {
                 			from: packet.data.to,
                 			name: _pipes[_users[_admin]].name,
-                			tab: packet.data.name,
+                			tab: _pipes[_users[packet.data.to]].name,
                 			to: packet.data.from,            			
             				msg: packet.data.msg  
                 		}
