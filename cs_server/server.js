@@ -158,38 +158,41 @@ wsServer.on('request', function(request) {
     };
 
     var _login = function(level, md5_id, name, uid) {
-		_pipes[uid].md5_id = md5_id;
-		_pipes[uid].name = name;
-		_pipes[uid].level = level;
-		var res = {
-			route: "login",
-			res: {
-				level: level, 
-				from: md5_id, 
-				name: name
+    	if (md5_id == null) {
+    		_echo(connection, {route: "login", res: null});
+    	} else {
+			_pipes[uid].md5_id = md5_id;
+			_pipes[uid].name = name;
+			_pipes[uid].level = level;
+			var res = {
+				route: "login",
+				res: {
+					level: level, 
+					from: md5_id, 
+					name: name
+				}
+			};
+	    	_echo(connection, res);
+	    	
+	    	var md5_prev = md5_id;
+			if (level == "admin") {
+				md5_prev = _admin;
+				_admin = md5_id;
 			}
-		};
-    	_echo(connection, res);
-    	
-    	var md5_prev = md5_id;
-		if (level == "admin") {
-			md5_prev = _admin;
-			_admin = md5_id;
-		}
-    	
-    	if (_users[md5_prev] != undefined) {
-    		var prev = _pipes[_users[md5_prev]];
-			var data = {
-					route: "message",
-					from: prev.md5_id,
-					name: name,
-					to: md5_id,		// to self, using alert
-					msg: name+"logined from "+connection.remoteAddress+"。you been kicked out."
-				};
-			_echo(prev.connection, data);
+	    	
+	    	if (_users[md5_prev] != undefined) {
+	    		var prev = _pipes[_users[md5_prev]];
+				var data = {
+						route: "message",
+						from: prev.md5_id,	// from self, using alert
+						name: name,
+						to: md5_id,		
+						msg: name+"logined from "+connection.remoteAddress+"。you been kicked out."
+					};
+				_echo(prev.connection, data);
+	    	}
+			_users[md5_id] = uid;
     	}
-    	
-		_users[md5_id] = uid;
     };
 
     /**

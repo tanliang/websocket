@@ -23,18 +23,21 @@ Auth.prototype.admin = function(callback) {
             	j.setCookie(cookie, url);
             	request.post({url: url+"/?route=api/user", jar: j, form: {username: username, password: password}}, function (error, response, body) {
                 	//console.log(response);
-                    if (!error && response.statusCode == 200) {
-                    	var res = JSON.parse(body);
-                        if (res.success == 1) {
-                        	var md5  = crypto.createHash("md5");
-                    		var md5_id = md5.update(res.data.user_id).digest("hex");
-                    		var level = "seller";
-                    		if (res.data.user_group_id == 12) {
-                    			level = "admin";
-                    		}
-                        	callback(level, md5_id, res.data.fullname, uid);
-                        }
-                    }
+            		var md5_id = null,
+	        			level = "seller",
+	        			name = null;
+	                if (!error && response.statusCode == 200) {
+	                	var res = JSON.parse(body);
+	                    if (res.success == 1) {
+	                    	var md5 = crypto.createHash("md5");
+	                		md5_id  = md5.update(res.data.user_id).digest("hex");
+	                		if (res.data.user_group_id == 12) {
+	                			level = "admin";
+	                		}
+	                		name = res.data.fullname;
+	                    }
+	                }
+	            	callback(level, md5_id, name, uid);
                 });
             }
         }
