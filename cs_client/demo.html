@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-<title>demo for H5</title>
+<title>demo for h5</title>
 <script type="text/javascript" src="js/jquery.js"></script>
 <script type="text/javascript" src="js/jquery.url.js"></script>
 <script type="text/javascript" src="js/jquery.WebSocket.min.js"></script>
@@ -88,16 +88,18 @@ main .content {
 <script type="text/javascript">
 
 $(function(){
-   	const WS_ID = 'WebSocketPipe';
-   	var param = $.url().param();
-   	var from = null;
-   	var name = null;
+    const WS_ID = 'WebSocketPipe';
+    var param = $.url().param();
+    var from = null;
+    var name = null;
 
     // The WebSocket-Object (with resource + fallback)
     var ws = $.WebSocket('ws://127.0.0.1:8078');
     // WebSocket onerror event triggered also in fallback
     ws.onerror = function(e) {
         console.log('Error with WebSocket uid: ' + e.target.uid);
+        alert("connecting to server failed, please try again later.");
+        history.go(-1);
     };
     /**
      * demonstrate multiplexing
@@ -116,44 +118,45 @@ $(function(){
                 if (packet.type == WS_ID) {
                     switch (packet.action) {
                     case 'ping':
-                    	break;
+                        break;
                     case 'message':
                     default:
-                    	switch (packet.data.route) {
-                    	case 'login':
-                    		var res = packet.data.res;
-                    		if (res) {
-                    			pipe1.send({route: "ping"});
-                    			_recv("Welcome.");
-                    			from = res.from;
-                    			name = res.name;
-                    			// send param.msg
-                    			var data = {
-                    				route: "message",
-                    				from: from,
-                    				name: name,
-                    				to: param.to,
-                    				msg: param.msg
-                    			};
-                    			pipe1.send(data);
-                    		} else {
-                    			_recv("login fail.");
-                    		}
-                    		break;
-                    	default:
-                    		var msg = "system is busy, try again later.";
-                    		if (packet.data && packet.data.msg) {
-                    			msg = packet.data.msg;
-                    		}
-                    		_recv(msg);
-                    		break;
-                    	}
-                    	break;
+                        switch (packet.data.route) {
+                        case 'login':
+                            var res = packet.data.res;
+                            if (res) {
+                                pipe1.send({route: "ping"});
+                                _recv("Welcom, what can I do for you?");
+                                from = res.from;
+                                name = res.name;
+                                // send param.msg
+                                var data = {
+                                    route: "message",
+                                    from: from,
+                                    name: name,
+                                    to: param.to,
+                                    msg: param.msg
+                                };
+                                pipe1.send(data);
+                            } else {
+                                _recv("login failed.");
+                            }
+                            break;
+                        default:
+                            var msg = "Mon-Fri 09:00-18:00, service not available now, please try again later.";
+                            if (packet.data && packet.data.msg) {
+                                msg = packet.data.msg;
+                            }
+                            _recv(msg);
+                            break;
+                        }
+                        break;
                     }
                 }
             },
             onerror: function(e) {
                 console.log('< pipe1 error : ' + e.data);
+                alert("connecting to server failed, please try again later.");
             },
             onclose: function() {
                 console.log('pipe1 (' + this.uid + ') connection closed!');
@@ -168,9 +171,9 @@ $(function(){
     };
 
     $("#send").keyup(function(e){
-    	if (e.keyCode == 13) {
-    		var d = new Date();
-    		$("#main").append('<p class="msg-send"><label>send at '+d.toLocaleString()+'</label><br>'+$("#send").val()+'</p>');
+        if (e.keyCode == 13) {
+            var d = new Date();
+            $("#main").append('<p class="msg-send"><label>send at '+d.toLocaleString()+'</label><br>'+$("#send").val()+'</p>');
             var data = {
                 route: "message",
                 from: from,
@@ -181,7 +184,7 @@ $(function(){
             pipe1.send(data);
             $("#send").val("");
             $("main").scrollTop($("main").height());
-    	}
+        }
     });
 });
 </script>
