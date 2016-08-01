@@ -201,7 +201,7 @@ wsServer.on('request', function(request) {
      */
     var _ping = function(connection, uid) {
 
-        connection.send('{"type": "'+WS_ID+'", "uid": "' + uid + '", "action": "ping"}');
+        connection.send('{"type": "'+WS_ID+'", "uid": "' + uid + '", "action": "ping", "data": '+Math.round(new Date().getTime()/1000)+'}');
     };
 
     /**

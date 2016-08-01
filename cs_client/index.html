@@ -226,12 +226,16 @@ nw.Window.get().on('focus', function(){
                     console.log('< pipe1 : ' + e.data);
                     packet = JSON.parse(e.data);
                     if (packet.type == WS_ID) {
+                        var data = packet.data;
                         switch (packet.action) {
                         case 'ping':
+                            if (Math.round(new Date().getTime()/1000) - data > 30) {
+                                alert("local time not sync with server time, confirm to reconnect.");
+                                pipe1.send($("#login").serializeObject());
+                            }
                             break;
                         case 'message':
                         default:
-                            var data = packet.data;
                             switch (data.route) {
                             case 'login':
                                 if (data.res) {
