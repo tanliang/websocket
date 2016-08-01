@@ -85,7 +85,7 @@ wsServer.on('request', function(request) {
                     	level: null
                     };
                     var login = new auth(packet);
-                	login.ssapi(_login);
+                	login.buyer(_login);
                 	break;
                 case 'shutdown':
                 	delete _users[_pipes[packet.uid].md5_id];
@@ -97,7 +97,8 @@ wsServer.on('request', function(request) {
                 }
             }
         } catch (e) {
-        	console.log(e.name + ': ' + e.message);
+            console.log('[' + new Date().toUTCString() + ']');
+            console.log(e.name + ': ' + e.message);
         };
     };
     
@@ -108,7 +109,7 @@ wsServer.on('request', function(request) {
     		 break;
     	case 'login':
         	var login = new auth(packet);
-        	login.ssbuy(_login);
+        	login.admin(_login);
         	break;
         default:
         	if (_users[packet.data.to] == undefined && _admin == null) {

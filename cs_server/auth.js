@@ -53,7 +53,7 @@ Auth.prototype.buyer = function(callback) {
         if (!error && response.statusCode == 200) {
             var res = JSON.parse(body);
             if (res.success) {
-            	var name = res.data.nickname || "瘦友";
+            	var name = res.data.nickname || "replace_me";
             	callback("buyer", res.data.md5_id, name, uid);
             }
         }
