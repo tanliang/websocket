@@ -230,6 +230,9 @@ nw.Window.get().on('focus', function(){
                         switch (packet.action) {
                         case 'ping':
                             if (Math.round(new Date().getTime()/1000) - data > 30) {
+                                if (alert_flag && interval == null) {
+                                    interval = window.setInterval("tray.toggleIcon()", 600);
+                                }
                                 alert("local time not sync with server time, confirm to reconnect.");
                                 pipe1.send($("#login").serializeObject());
                             }
