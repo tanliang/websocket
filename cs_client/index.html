@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<title>console</title>
+<title>message console</title>
 <link rel="stylesheet" href="js/jquery-ui.min.css">
 <script type="text/javascript" src="js/jquery.js"></script>
 <script type="text/javascript" src="js/jquery.url.js"></script>
@@ -60,7 +60,7 @@ body {
     text-decoration: none;
 }
 
-#warning {
+#warning, #network {
     width:98%;
     margin:0 auto;
 }
@@ -94,15 +94,28 @@ body {
 </head>
 <body>
 
-    <div id="dialog" title="please input login info.">
+<div id="warning" class="ui-widget show">
+    <div class="ui-state-highlight ui-corner-all" style="margin-top: 30px; padding: 0 .7em;">
+        <p><span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;"></span>
+        <strong>Info: </strong> Set Tray icon visible for message alerting.</p>
+    </div>
+</div>
+<div id="network" class="ui-widget hide">
+    <div class="ui-state-highlight ui-corner-all" style="width:96%;margin-top: 50px; padding: 0 .7em;">
+        <p ><span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;"></span>
+        <strong>Info: </strong> Network fail, please login again.
+        <span onclick="$('#network').hide();" class="ui-icon ui-icon-close" style="float: right; margin-right: .3em;"></span></p>
+    </div>
+</div>
+    <div id="dialog" title="请输入登录信息">
         <form id="login">
             <fieldset class="ui-helper-reset">
                 <input type="hidden" name="route" value="login">
                 <label for="username">username</label>
-                <input type="text" name="username" id="username" value="xxx" style="border:1px solid #c5c5c5;"
+                <input type="text" name="username" id="username" value="" style="border:1px solid #c5c5c5;"
                     class="ui-widget-content ui-corner-all"> 
                 <label for="password">password</label>
-                <input type="password" name="password" id="password" value="123456" style="border:1px solid #c5c5c5;"
+                <input type="password" name="password" id="password" value="" style="border:1px solid #c5c5c5;"
                     class="ui-widget-content ui-corner-all"> 
             </fieldset>
         </form>
@@ -115,14 +128,8 @@ body {
         </ul>
     </div>
     <div id="input">
-    <input type="text" name="send" id="send" placeholder="Enter send message" value="" alt=""
+    <input type="text" name="send" id="send" placeholder="Press ENTER to send message." value="" alt=""
                     class="ui-widget-content ui-corner-all"> 
-    </div>
-</div>
-<div id="warning" class="ui-widget show">
-    <div class="ui-state-highlight ui-corner-all" style="margin-top: 20px; padding: 0 .7em;">
-        <p><span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;"></span>
-        <strong>INFO: </strong> no message now.</p>
     </div>
 </div>
 </body>
@@ -136,7 +143,7 @@ class Tray {
 
         // Give it a menu
         var menu = new nw.Menu();
-        menu.append(new nw.MenuItem({ label: 'quit', click: function(){
+        menu.append(new nw.MenuItem({ label: 'Quit', click: function(){
             nw.Window.get().close();
         } }));
         tray.menu = menu;
@@ -202,13 +209,28 @@ nw.Window.get().on('focus', function(){
         const WS_ID = 'WebSocketPipe';
         var from;
         var name;
+        var ping = {data:0, intv:null};
+        
+        ping.check = function() {
+            if (Math.round(new Date().getTime()/1000) - ping.data > 30) {
+                if (ping.intv != null) {
+                    clearInterval(ping.intv);
+                    ping.intv = null;
+                }
+                if (alert_flag && interval == null) {
+                    interval = window.setInterval("tray.toggleIcon()", 600);
+                }
+                $("#network").show();
+                //setTimeout(function(){alert("网络错误，请重新登录。");}, 5);
+            }
+        };
 
         // The WebSocket-Object (with resource + fallback)
         var ws = $.WebSocket('ws://127.0.0.1:8078');
         // WebSocket onerror event triggered also in fallback
         ws.onerror = function(e) {
             console.log('Error with WebSocket uid: ' + e.target.uid);
-            alert("connecting to server failed.");
+            alert("Fail to connect with server, please try again later.");
             nw.Window.get().close();
         };
         /**
@@ -229,31 +251,31 @@ nw.Window.get().on('focus', function(){
                         var data = packet.data;
                         switch (packet.action) {
                         case 'ping':
-                            if (Math.round(new Date().getTime()/1000) - data > 30) {
-                                if (alert_flag && interval == null) {
-                                    interval = window.setInterval("tray.toggleIcon()", 600);
-                                }
-                                alert("local time not sync with server time, confirm to reconnect.");
-                                pipe1.send($("#login").serializeObject());
-                            }
+                            ping.data = data;
                             break;
                         case 'message':
                         default:
                             switch (data.route) {
                             case 'login':
                                 if (data.res) {
-                                	from = data.res.from;
+                                    from = data.res.from;
                                     name = data.res.name
                                     pipe1.send({route: "ping"});
                                     $( "#dialog" ).dialog("close");
+                                    ping.data = Math.round(new Date().getTime()/1000);
+                                    if (ping.intv != null) {
+                                        clearInterval(ping.intv);
+                                        ping.intv = null;
+                                    }
+                                    ping.intv = window.setInterval(ping.check, 1000);
                                 } else {
                                     alert("please check your login info.");
                                 }
                                 break;
                             default:
                                 if (from != undefined && from == data.from) {
-                                	alert(data.msg);
-                                	nw.Window.get().close();
+                                    alert(data.msg);
+                                    nw.Window.get().close();
                                 } else {
                                     if ($("#warning").hasClass("show")) {
                                         $("#warning").removeClass("show");
@@ -327,7 +349,7 @@ nw.Window.get().on('focus', function(){
       autoOpen: false,
       modal: true,
       buttons: [{
-        text: "login",
+        text: "Login",
         click: function() {
             if (pipe1 != undefined) {
                 pipe1.send($("#login").serializeObject());

@@ -7,8 +7,8 @@
     "test": "echo \"Error: no test specified! Configure in package.json\" && exit 1"
   },
   "repository": {
-	  "type": "git",
-	  "url": "https://github.com/tanliang/websocket.git"
+    "type": "git",
+    "url": "https://github.com/tanliang/websocket.git"
   },
   "keywords": [
     "node.js",
@@ -17,5 +17,10 @@
   ],
   "author": "",
   "license": "MIT",
-  "readmeFilename": "README.md"
+  "readmeFilename": "README.md",
+  "dependencies": {
+    "commander": "^2.9.0",
+    "request": "^2.74.0",
+    "websocket": "^1.0.23"
+  }
 }

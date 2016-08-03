@@ -92,6 +92,19 @@ $(function(){
     var param = $.url().param();
     var from = null;
     var name = null;
+    
+    var ping = {data:0, intv:null};
+
+    ping.check = function() {
+        if (Math.round(new Date().getTime()/1000) - ping.data > 30) {
+            if (ping.intv != null) {
+                clearInterval(ping.intv);
+                ping.intv = null;
+            }
+            alert("Fail to connect server, reload?");
+            location.reload();
+        }
+    };
 
     // The WebSocket-Object (with resource + fallback)
     var ws = $.WebSocket('ws://127.0.0.1:8078');
@@ -118,6 +131,7 @@ $(function(){
                 if (packet.type == WS_ID) {
                     switch (packet.action) {
                     case 'ping':
+                        ping.data = packet.data;
                         break;
                     case 'message':
                     default:
@@ -138,6 +152,14 @@ $(function(){
                                     msg: param.msg
                                 };
                                 pipe1.send(data);
+                                
+                                ping.data = Math.round(new Date().getTime()/1000);
+                                if (ping.intv != null) {
+                                    clearInterval(ping.intv);
+                                    ping.intv = null;
+                                }
+                                ping.intv = window.setInterval(ping.check, 1000);
+                                
                             } else {
                                 _recv("login failed.");
                             }
