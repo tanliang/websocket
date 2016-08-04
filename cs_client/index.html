@@ -305,6 +305,9 @@ nw.Window.get().on('focus', function(){
                 }
             });
             var _recv = function(from, name, msg) {
+                if (msg.substr(0,4) == 'http') {
+                    msg = '<img src="'+msg+'" style="max-width:100%"/>';
+                }
                 var d = new Date();
                 $("#tabs-"+from).append('<p><label>recv at '+d.toLocaleString()+' by '+ name +'</label><br>'+msg+'</p>');
                 $("body").scrollTop($("body").height());
@@ -336,6 +339,9 @@ nw.Window.get().on('focus', function(){
             };
             pipe1.send(packet);
             $("#send").val("");
+            if (msg.substr(0,4) == 'http') {
+                msg = '<img src="'+msg+'" style="max-width:100%"/>';
+            }
             var d = new Date();
             $("#tabs-"+from).append('<p class="msg-send"><label>send at '+d.toLocaleString()+' by '+ name +'</label><br>'+msg+'</p>');
             $("body").scrollTop($("body").height());
